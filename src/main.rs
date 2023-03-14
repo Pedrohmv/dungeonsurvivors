@@ -7,7 +7,15 @@ const ENEMY_SIZE: f32 = PLAYER_SIZE;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Bevy game".to_string(), // ToDo
+                resolution: (800., 600.).into(),
+                canvas: Some("#bevy".to_owned()),
+                ..default()
+            }),
+            ..default()
+        }))
         .add_plugin(WorldInspectorPlugin::new())
         .add_startup_system(setup_camera)
         .add_startup_system(spawn_player)
