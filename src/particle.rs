@@ -1,4 +1,4 @@
-use crate::{enemy::Enemy, player::Player};
+use crate::{enemy::Enemy, player::Player, Score};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -84,6 +84,7 @@ fn handle_particle_contacts(
     mut collision_events: EventReader<CollisionEvent>,
     mut query: Query<(Entity, &mut Particle)>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
+    mut score: ResMut<Score>,
 ) {
     for collision_event in collision_events.iter() {
         for (entity, particle) in query.iter() {
@@ -97,6 +98,7 @@ fn handle_particle_contacts(
                     {
                         if enemy.health <= particle.damage {
                             commands.entity(enemy_entity).despawn();
+                            score.value += 1;
                         } else {
                             enemy.health -= 8;
                         }

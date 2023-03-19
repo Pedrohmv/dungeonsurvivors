@@ -6,6 +6,7 @@ mod wave;
 use bevy::{
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::*,
+    text::TextStyle,
     window::PrimaryWindow,
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -31,7 +32,8 @@ fn main() {
     .add_plugin(EnemyPlugin)
     .add_plugin(WavePlugin)
     .add_plugin(ParticlePlugin)
-    .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0));
+    .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+    .insert_resource(Score { value: 0 });
 
     if cfg!(feature = "debug") {
         app.add_plugin(WorldInspectorPlugin::new())
@@ -40,15 +42,39 @@ fn main() {
     app.add_startup_system(setup_camera)
         .add_system(camera_follow_player)
         .add_system(display_events)
+        .add_system(update_score)
         .run();
 }
 
-fn setup_camera(mut commands: Commands, query: Query<&Window, With<PrimaryWindow>>) {
+fn setup_camera(
+    mut commands: Commands,
+    query: Query<&Window, With<PrimaryWindow>>,
+    asset_server: Res<AssetServer>,
+) {
     let window = query.get_single().unwrap();
     commands.spawn(Camera2dBundle {
         transform: Transform::from_xyz(window.width() / 2., window.height() / 2., 0.),
         ..default()
     });
+    commands.spawn(
+        TextBundle::from_section(
+            "Score: 0",
+            TextStyle {
+                font_size: 30.,
+                color: Color::BLACK,
+                font: asset_server.load("fonts/DMSans-Regular.ttf"),
+            },
+        )
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                top: Val::Px(5.),
+                left: Val::Px(5.),
+                ..default()
+            },
+            ..default()
+        }),
+    );
 }
 
 fn camera_follow_player(
@@ -75,4 +101,13 @@ fn display_events(
     for contact_force_event in contact_force_events.iter() {
         println!("Received contact force event: {:?}", contact_force_event);
     }
+}
+
+#[derive(Resource)]
+pub struct Score {
+    value: u32,
+}
+
+fn update_score(score: Res<Score>, mut query: Query<&mut Text>) {
+    query.get_single_mut().unwrap().sections[0].value = format!("Score: {}", score.value);
 }
