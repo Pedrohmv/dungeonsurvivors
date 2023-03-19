@@ -1,15 +1,19 @@
 mod enemy;
 mod particle;
 mod player;
+mod wave;
 
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::{
+    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
+    prelude::*,
+    window::PrimaryWindow,
+};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 use enemy::EnemyPlugin;
 use particle::ParticlePlugin;
 use player::{Player, PlayerPlugin};
-
-const PLAYER_SIZE: f32 = 32.;
+use wave::WavePlugin;
 
 fn main() {
     let mut app = App::new();
@@ -22,8 +26,10 @@ fn main() {
         }),
         ..default()
     }))
+    .add_plugin(FrameTimeDiagnosticsPlugin::default())
     .add_plugin(PlayerPlugin)
     .add_plugin(EnemyPlugin)
+    .add_plugin(WavePlugin)
     .add_plugin(ParticlePlugin)
     .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0));
 
@@ -32,7 +38,8 @@ fn main() {
             .add_plugin(RapierDebugRenderPlugin::default());
     }
     app.add_startup_system(setup_camera)
-        .add_system(confine_player_movement)
+        .add_system(camera_follow_player)
+        .add_system(display_events)
         .run();
 }
 
@@ -44,31 +51,28 @@ fn setup_camera(mut commands: Commands, query: Query<&Window, With<PrimaryWindow
     });
 }
 
-fn confine_player_movement(
-    mut query: Query<&mut Transform, With<Player>>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
+fn camera_follow_player(
+    mut query: Query<&mut Transform, (With<Camera2d>, Without<KinematicCharacterController>)>,
+    player_query: Query<&Transform, With<KinematicCharacterController>>,
 ) {
-    if let Ok(mut transform) = query.get_single_mut() {
-        let window = window_query.get_single().unwrap();
-        let x_min = PLAYER_SIZE / 2.;
-        let x_max = window.width() - PLAYER_SIZE / 2.;
-        let y_min = PLAYER_SIZE / 2.;
-        let y_max = window.height() - PLAYER_SIZE / 2.;
-
-        let mut translation = transform.translation;
-
-        if translation.x < x_min {
-            translation.x = x_min
-        } else if translation.x > x_max {
-            translation.x = x_max;
+    if let Ok(player_transform) = player_query.get_single() {
+        let player_translation = player_transform.translation;
+        if let Ok(mut camera_transform) = query.get_single_mut() {
+            camera_transform.translation.x = player_translation.x;
+            camera_transform.translation.y = player_translation.y;
         }
+    }
+}
 
-        if translation.y < y_min {
-            translation.y = y_min
-        } else if translation.y > y_max {
-            translation.y = y_max;
-        }
+fn display_events(
+    mut collision_events: EventReader<CollisionEvent>,
+    mut contact_force_events: EventReader<ContactForceEvent>,
+) {
+    for collision_event in collision_events.iter() {
+        println!("Received collision event: {:?}", collision_event);
+    }
 
-        transform.translation = translation;
+    for contact_force_event in contact_force_events.iter() {
+        println!("Received contact force event: {:?}", contact_force_event);
     }
 }

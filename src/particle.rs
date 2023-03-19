@@ -1,17 +1,20 @@
-use crate::player::Player;
+use crate::{enemy::Enemy, player::Player};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 const PLAYER_SIZE: f32 = 32.;
 
 #[derive(Component)]
-pub struct Particle;
+pub struct Particle {
+    damage: u16,
+}
 
 pub struct ParticlePlugin;
 
 impl Plugin for ParticlePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(create_particles);
+        app.add_system(create_particles)
+            .add_system(handle_particle_contacts);
     }
 }
 
@@ -38,7 +41,7 @@ fn create_particles(
         player.particle_timer.tick(delta);
         if player.particle_timer.just_finished() {
             for i in 0..10 {
-                let rad = (360. * (i as f32) / 10.) * std::f32::consts::PI / 180.;
+                let rad = std::f32::consts::TAU * (i as f32) / 10.;
                 let player_translation = transform.translation;
                 let particle_translation = Vec3::new(
                     player_translation.x + PLAYER_SIZE * rad.cos(),
@@ -47,12 +50,13 @@ fn create_particles(
                 );
                 let direction = (particle_translation - player_translation).normalize();
                 commands.spawn((
-                    RigidBody::Dynamic,
+                    RigidBody::KinematicVelocityBased,
                     Velocity {
                         linvel: Vec2::new(direction.x, direction.y) * 100.,
                         ..default()
                     },
-                    Collider::ball(PLAYER_SIZE / 2.),
+                    Collider::ball(PLAYER_SIZE / 2. - 3.),
+                    GravityScale(0.),
                     SpriteSheetBundle {
                         texture_atlas: texture_atlas_handle.clone(),
                         sprite: TextureAtlasSprite {
@@ -67,8 +71,39 @@ fn create_particles(
                         ),
                         ..default()
                     },
-                    Particle,
+                    Name::from("Particle"),
+                    Particle { damage: 8 },
                 ));
+            }
+        }
+    }
+}
+
+fn handle_particle_contacts(
+    mut commands: Commands,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut query: Query<(Entity, &mut Particle)>,
+    mut enemy_query: Query<(Entity, &mut Enemy)>,
+) {
+    for collision_event in collision_events.iter() {
+        for (entity, particle) in query.iter() {
+            if let CollisionEvent::Started(e1, e2, _) = collision_event {
+                if e1 == &entity || e2 == &entity {
+                    commands.entity(entity).despawn();
+                    if let Some((enemy_entity, mut enemy)) = enemy_query
+                        .iter_mut()
+                        .filter(|(enemy_entity, _)| enemy_entity == e1 || enemy_entity == e2)
+                        .next()
+                    {
+                        if enemy.health <= particle.damage {
+                            commands.entity(enemy_entity).despawn();
+                        } else {
+                            enemy.health -= 8;
+                        }
+                    };
+                }
+                //commands.entity(*x).despawn();
+                //          commands.entity(*other_entity).despawn();
             }
         }
     }

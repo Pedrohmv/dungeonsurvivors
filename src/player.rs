@@ -1,4 +1,5 @@
 use bevy::{prelude::*, window::PrimaryWindow};
+use bevy_rapier2d::prelude::*;
 
 const PLAYER_SIZE: f32 = 32.;
 
@@ -35,6 +36,12 @@ fn spawn_player(
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let player_index = (8 - 1) * 12 + (1 - 1);
     commands.spawn((
+        RigidBody::KinematicPositionBased,
+        Collider::cuboid(PLAYER_SIZE / 2., PLAYER_SIZE / 2.),
+        KinematicCharacterController {
+            filter_flags: QueryFilterFlags::ONLY_FIXED,
+            ..default()
+        },
         SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             sprite: TextureAtlasSprite {
@@ -53,26 +60,25 @@ fn spawn_player(
 
 fn setup_player_movement(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<&mut Transform, With<Player>>,
+    mut controllers: Query<&mut KinematicCharacterController>,
     time: Res<Time>,
 ) {
-    if let Ok(mut transform) = query.get_single_mut() {
-        let mut direction = Vec3::ZERO;
+    if let Ok(mut controller) = controllers.get_single_mut() {
+        let mut direction = Vec2::ZERO;
 
         if keyboard_input.pressed(KeyCode::Left) {
-            direction -= Vec3::new(1., 0., 0.);
+            direction -= Vec2::new(1., 0.);
         }
         if keyboard_input.pressed(KeyCode::Right) {
-            direction += Vec3::new(1., 0., 0.);
+            direction += Vec2::new(1., 0.);
         }
         if keyboard_input.pressed(KeyCode::Up) {
-            direction += Vec3::new(0., 1., 0.);
+            direction += Vec2::new(0., 1.);
         }
         if keyboard_input.pressed(KeyCode::Down) {
-            direction -= Vec3::new(0., 1., 0.);
+            direction -= Vec2::new(0., 1.);
         }
 
-        direction = direction.normalize_or_zero();
-        transform.translation += direction * 500. * time.delta_seconds();
+        controller.translation = Some(direction.normalize() * 500. * time.delta_seconds());
     }
 }
