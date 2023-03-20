@@ -96,7 +96,7 @@ fn handle_particle_contacts(
                         .filter(|(enemy_entity, _)| enemy_entity == e1 || enemy_entity == e2)
                         .next()
                     {
-                        enemy.health -= particle.damage;
+                        enemy.health -= particle.damage as i16;
                     };
                 }
                 //commands.entity(*x).despawn();

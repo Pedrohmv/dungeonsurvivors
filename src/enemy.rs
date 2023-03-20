@@ -8,7 +8,7 @@ const ENEMY_SIZE: f32 = 32.;
 
 #[derive(Component)]
 pub struct Enemy {
-    pub health: u16,
+    pub health: i16,
 }
 
 pub struct EnemyPlugin;
