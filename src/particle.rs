@@ -82,7 +82,7 @@ fn create_particles(
 fn handle_particle_contacts(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
-    mut query: Query<(Entity, &mut Particle)>,
+    query: Query<(Entity, &mut Particle)>,
     mut enemy_query: Query<(Entity, &mut Enemy)>,
     mut score: ResMut<Score>,
 ) {
@@ -91,22 +91,24 @@ fn handle_particle_contacts(
             if let CollisionEvent::Started(e1, e2, _) = collision_event {
                 if e1 == &entity || e2 == &entity {
                     commands.entity(entity).despawn();
-                    if let Some((enemy_entity, mut enemy)) = enemy_query
+                    if let Some((_, mut enemy)) = enemy_query
                         .iter_mut()
                         .filter(|(enemy_entity, _)| enemy_entity == e1 || enemy_entity == e2)
                         .next()
                     {
-                        if enemy.health <= particle.damage {
-                            commands.entity(enemy_entity).despawn();
-                            score.value += 1;
-                        } else {
-                            enemy.health -= 8;
-                        }
+                        enemy.health -= particle.damage;
                     };
                 }
                 //commands.entity(*x).despawn();
                 //          commands.entity(*other_entity).despawn();
             }
+        }
+    }
+
+    for (entity, enemy) in enemy_query.iter() {
+        if enemy.health <= 0 {
+            commands.entity(entity).despawn();
+            score.value += 1;
         }
     }
 }
