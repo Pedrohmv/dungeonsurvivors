@@ -79,6 +79,6 @@ fn setup_player_movement(
             direction -= Vec2::new(0., 1.);
         }
 
-        controller.translation = Some(direction.normalize() * 500. * time.delta_seconds());
+        controller.translation = Some(direction.normalize() * 120. * time.delta_seconds());
     }
 }
