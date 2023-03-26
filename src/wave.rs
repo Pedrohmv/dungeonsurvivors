@@ -15,8 +15,8 @@ pub struct WavePlugin;
 
 impl Plugin for WavePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_wave)
-            .add_system(spawn_enemy_wave);
+        app.add_startup_system(spawn_wave);
+        //.add_system(spawn_enemy_wave);
     }
 }
 
@@ -55,8 +55,12 @@ fn spawn_enemy_wave(
         let enemy_index = (11 - 1) * 12 + (2 - 1);
 
         for _ in 0..1 {
-            let x = rand::random::<f32>() * (window.width() - ENEMY_SIZE) + ENEMY_SIZE / 2.;
-            let y = rand::random::<f32>() * (window.height() - ENEMY_SIZE) + ENEMY_SIZE / 2.;
+            let x = window.width() * 0.8 * rand::random::<f32>()
+                + rand::random::<f32>() * (window.width() * 0.2 - ENEMY_SIZE)
+                + ENEMY_SIZE / 2.;
+            let y = window.height() * 0.8 * rand::random::<f32>()
+                + rand::random::<f32>() * (window.height() * 0.2 - ENEMY_SIZE)
+                + ENEMY_SIZE / 2.;
             commands.spawn((
                 RigidBody::KinematicVelocityBased,
                 Collider::cuboid(ENEMY_SIZE / 2., ENEMY_SIZE / 2.),

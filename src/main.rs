@@ -1,6 +1,7 @@
 mod enemy;
 mod particle;
 mod player;
+mod sprite_sheets;
 mod wave;
 
 use bevy::{
@@ -14,6 +15,7 @@ use bevy_rapier2d::prelude::*;
 use enemy::EnemyPlugin;
 use particle::ParticlePlugin;
 use player::{Player, PlayerPlugin};
+use sprite_sheets::SpriteSheetPlugin;
 use wave::WavePlugin;
 
 fn main() {
@@ -23,6 +25,7 @@ fn main() {
             title: "Bevy game".to_string(), // ToDo
             resolution: (1280., 720.).into(),
             canvas: Some("#bevy".to_owned()),
+            fit_canvas_to_parent: true,
             ..default()
         }),
         ..default()
@@ -32,6 +35,7 @@ fn main() {
     .add_plugin(EnemyPlugin)
     .add_plugin(WavePlugin)
     .add_plugin(ParticlePlugin)
+    .add_plugin(SpriteSheetPlugin)
     .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
     .insert_resource(Score { value: 0 });
 
@@ -41,7 +45,7 @@ fn main() {
     }
     app.add_startup_system(setup_camera)
         .add_system(camera_follow_player)
-        .add_system(display_events)
+        //.add_system(display_events)
         .add_system(update_score)
         .run();
 }
