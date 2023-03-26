@@ -1,4 +1,9 @@
-use crate::{enemy::Enemy, player::Player, Score};
+use crate::{
+    enemy::Enemy,
+    player::{Player, SpellEvent},
+    sprite_sheets::{Animation, SpriteSheetsMaps},
+    Score,
+};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -13,69 +18,53 @@ pub struct ParticlePlugin;
 
 impl Plugin for ParticlePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(create_particles)
+        app.add_system(shoot_particle)
             .add_system(handle_particle_contacts);
     }
 }
 
-fn create_particles(
+fn shoot_particle(
     mut commands: Commands,
-    time: Res<Time>,
-    asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-    mut query: Query<(&Transform, &mut Player)>,
+    sprite_sheet_maps: Res<SpriteSheetsMaps>,
+    mut spell_events: EventReader<SpellEvent>,
+    player_query: Query<&Transform, With<Player>>,
 ) {
-    let delta = time.delta();
-    let texture_handle = asset_server.load("sprites/tilemap.png");
-    let texture_atlas = TextureAtlas::from_grid(
-        texture_handle,
-        Vec2::new(16., 16.),
-        12,
-        11,
-        Some(Vec2::new(1., 1.)),
-        None,
-    );
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    let player_index = (9 - 1) * 12 + (6 - 1);
-    for (transform, mut player) in query.iter_mut() {
-        player.particle_timer.tick(delta);
-        if player.particle_timer.just_finished() {
-            for i in 0..10 {
-                let rad = std::f32::consts::TAU * (i as f32) / 10.;
-                let player_translation = transform.translation;
-                let particle_translation = Vec3::new(
-                    player_translation.x + PLAYER_SIZE * rad.cos(),
-                    player_translation.y + PLAYER_SIZE * rad.sin(),
+    let transform = player_query.single();
+    for spell_event in spell_events.iter() {
+        commands.spawn((
+            RigidBody::KinematicVelocityBased,
+            Velocity {
+                linvel: Vec2::new(spell_event.direction.x, spell_event.direction.y) * 30.,
+                ..default()
+            },
+            Collider::ball(10.),
+            GravityScale(0.),
+            SpriteSheetBundle {
+                texture_atlas: sprite_sheet_maps.fireball_atlas.clone(),
+                sprite: TextureAtlasSprite {
+                    index: 0,
+                    custom_size: Some(Vec2::splat(32.)),
+                    ..default()
+                },
+                transform: Transform::from_xyz(
+                    transform.translation.x,
+                    transform.translation.y,
                     0.,
-                );
-                let direction = (particle_translation - player_translation).normalize();
-                commands.spawn((
-                    RigidBody::KinematicVelocityBased,
-                    Velocity {
-                        linvel: Vec2::new(direction.x, direction.y) * 100.,
-                        ..default()
-                    },
-                    Collider::ball(PLAYER_SIZE / 2. - 3.),
-                    GravityScale(0.),
-                    SpriteSheetBundle {
-                        texture_atlas: texture_atlas_handle.clone(),
-                        sprite: TextureAtlasSprite {
-                            index: player_index,
-                            custom_size: Some(Vec2::splat(PLAYER_SIZE)),
-                            ..default()
-                        },
-                        transform: Transform::from_xyz(
-                            transform.translation.x + PLAYER_SIZE * rad.cos(),
-                            transform.translation.y + PLAYER_SIZE * rad.sin(),
-                            0.,
-                        ),
-                        ..default()
-                    },
-                    Name::from("Particle"),
-                    Particle { damage: 8 },
-                ));
-            }
-        }
+                )
+                .with_rotation(Quat::from_rotation_arc(
+                    Vec3::X,
+                    spell_event.direction.extend(0.),
+                )),
+                ..default()
+            },
+            Name::from("Particle"),
+            Particle { damage: 8 },
+            Animation {
+                start: 0,
+                end: 2,
+                timer: Timer::from_seconds(0.1, TimerMode::Repeating),
+            },
+        ));
     }
 }
 
@@ -99,8 +88,6 @@ fn handle_particle_contacts(
                         enemy.health -= particle.damage as i16;
                     };
                 }
-                //commands.entity(*x).despawn();
-                //          commands.entity(*other_entity).despawn();
             }
         }
     }
