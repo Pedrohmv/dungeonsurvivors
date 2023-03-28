@@ -4,17 +4,12 @@ mod player;
 mod sprite_sheets;
 mod wave;
 
-use bevy::{
-    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
-    prelude::*,
-    text::TextStyle,
-    window::PrimaryWindow,
-};
+use bevy::{prelude::*, text::TextStyle, window::PrimaryWindow};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 use enemy::EnemyPlugin;
 use particle::ParticlePlugin;
-use player::{Player, PlayerPlugin};
+use player::PlayerPlugin;
 use sprite_sheets::SpriteSheetPlugin;
 use wave::WavePlugin;
 
@@ -22,7 +17,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
-            title: "Bevy game".to_string(), // ToDo
+            title: "Bevy game".to_string(),
             resolution: (1280., 720.).into(),
             canvas: Some("#bevy".to_owned()),
             fit_canvas_to_parent: true,
@@ -30,7 +25,6 @@ fn main() {
         }),
         ..default()
     }))
-    .add_plugin(FrameTimeDiagnosticsPlugin::default())
     .add_plugin(PlayerPlugin)
     .add_plugin(EnemyPlugin)
     .add_plugin(WavePlugin)

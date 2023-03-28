@@ -37,7 +37,7 @@ fn shoot_particle(
                 linvel: Vec2::new(spell_event.direction.x, spell_event.direction.y) * 30.,
                 ..default()
             },
-            Collider::ball(10.),
+            Collider::compound(vec![(Vec2::new(4.0, 0.0), 0., Collider::ball(10.))]),
             GravityScale(0.),
             SpriteSheetBundle {
                 texture_atlas: sprite_sheet_maps.fireball_atlas.clone(),

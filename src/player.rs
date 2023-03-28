@@ -144,7 +144,7 @@ fn cursor_grab_system(mut windows: Query<&mut Window>) {
 
     // if you want to use the cursor, but not let it leave the window,
     // use `Confined` mode:
-    //window.cursor.grab_mode = CursorGrabMode::Confined;
+    window.cursor.grab_mode = CursorGrabMode::Confined;
 
     // for a game that doesn't use the cursor (like a shooter):
     // use `Locked` mode to keep the cursor in one place
