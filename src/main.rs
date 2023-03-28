@@ -22,7 +22,7 @@ fn main() {
             title: "Bevy game".to_string(),
             resolution: (1280., 720.).into(),
             canvas: Some("#bevy".to_owned()),
-            fit_canvas_to_parent: true,
+            //fit_canvas_to_parent: true,
             ..default()
         }),
         ..default()
