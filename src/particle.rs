@@ -1,4 +1,5 @@
 use crate::{
+    combat::{Damage, DamageEvent},
     enemy::Enemy,
     player::{Player, SpellEvent},
     sprite_sheets::{Animation, SpriteSheetsMaps},
@@ -34,7 +35,7 @@ fn shoot_particle(
         commands.spawn((
             RigidBody::KinematicVelocityBased,
             Velocity {
-                linvel: Vec2::new(spell_event.direction.x, spell_event.direction.y) * 30.,
+                linvel: Vec2::new(spell_event.direction.x, spell_event.direction.y) * 300.,
                 ..default()
             },
             Collider::compound(vec![(Vec2::new(4.0, 0.0), 0., Collider::ball(10.))]),
@@ -72,27 +73,31 @@ fn handle_particle_contacts(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
     query: Query<(Entity, &mut Particle)>,
-    mut enemy_query: Query<(Entity, &mut Enemy)>,
+    mut enemy_query: Query<(Entity, &mut Enemy, &mut TextureAtlasSprite)>,
     mut score: ResMut<Score>,
+    mut damage_events: EventWriter<DamageEvent>,
 ) {
     for collision_event in collision_events.iter() {
         for (entity, particle) in query.iter() {
             if let CollisionEvent::Started(e1, e2, _) = collision_event {
                 if e1 == &entity || e2 == &entity {
                     commands.entity(entity).despawn();
-                    if let Some((_, mut enemy)) = enemy_query
+                    if let Some((entity, mut enemy, mut texture)) = enemy_query
                         .iter_mut()
-                        .filter(|(enemy_entity, _)| enemy_entity == e1 || enemy_entity == e2)
+                        .filter(|(enemy_entity, _, _)| enemy_entity == e1 || enemy_entity == e2)
                         .next()
                     {
                         enemy.health -= particle.damage as i16;
+                        damage_events.send(DamageEvent { entity });
+                        texture.color = Color::rgba(255., 255., 255., 1.);
+                        commands.entity(entity).insert(Damage::default());
                     };
                 }
             }
         }
     }
 
-    for (entity, enemy) in enemy_query.iter() {
+    for (entity, enemy, _) in enemy_query.iter() {
         if enemy.health <= 0 {
             commands.entity(entity).despawn();
             score.value += 1;

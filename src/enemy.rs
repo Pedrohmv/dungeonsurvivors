@@ -27,6 +27,6 @@ fn setup_enemy_movement(
     let player_transform = player_query.get_single().unwrap();
     for (mut velocity, transform) in query.iter_mut() {
         let direction = player_transform.translation - transform.translation;
-        velocity.linvel = Vec2::new(direction.x, direction.y).normalize() * 100.;
+        velocity.linvel = Vec2::new(direction.x, direction.y).normalize() * 40.;
     }
 }
