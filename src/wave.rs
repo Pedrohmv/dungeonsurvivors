@@ -15,8 +15,8 @@ pub struct WavePlugin;
 
 impl Plugin for WavePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_wave)
-            .add_system(spawn_enemy_wave);
+        app.add_startup_system(spawn_wave);
+        //.add_system(spawn_enemy_wave);
     }
 }
 

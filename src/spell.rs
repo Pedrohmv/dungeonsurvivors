@@ -1,5 +1,5 @@
 use crate::{
-    combat::{Damage, DamageEvent},
+    combat::{Damage, DamageEvent, Health},
     enemy::Enemy,
     player::{Player, SpellEvent},
     sprite_sheets::{Animation, SpriteSheetsMaps},
@@ -8,16 +8,14 @@ use crate::{
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-const PLAYER_SIZE: f32 = 32.;
-
 #[derive(Component)]
 pub struct Particle {
     damage: u16,
 }
 
-pub struct ParticlePlugin;
+pub struct SpellPlugin;
 
-impl Plugin for ParticlePlugin {
+impl Plugin for SpellPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(shoot_particle)
             .add_system(handle_particle_contacts);
@@ -28,10 +26,11 @@ fn shoot_particle(
     mut commands: Commands,
     sprite_sheet_maps: Res<SpriteSheetsMaps>,
     mut spell_events: EventReader<SpellEvent>,
-    player_query: Query<&Transform, With<Player>>,
+    mut player_query: Query<(&Transform, &mut Health), With<Player>>,
 ) {
-    let transform = player_query.single();
+    let (transform, mut health) = player_query.single_mut();
     for spell_event in spell_events.iter() {
+        health.current -= 1;
         commands.spawn((
             RigidBody::KinematicVelocityBased,
             Velocity {

@@ -5,7 +5,7 @@ use bevy::{
 };
 use bevy_rapier2d::prelude::*;
 
-use crate::sprite_sheets::SpriteSheetsMaps;
+use crate::{combat::Health, sprite_sheets::SpriteSheetsMaps};
 
 const PLAYER_SIZE: f32 = 32.;
 
@@ -76,6 +76,10 @@ fn spawn_player(
         },
         Player {
             destination: Vec3::ZERO,
+        },
+        Health {
+            total: 10,
+            current: 10,
         },
     ));
 }

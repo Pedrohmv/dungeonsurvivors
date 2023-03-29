@@ -1,7 +1,7 @@
 mod combat;
 mod enemy;
-mod particle;
 mod player;
+mod spell;
 mod sprite_sheets;
 mod wave;
 
@@ -10,8 +10,8 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 use combat::CombatPlugin;
 use enemy::EnemyPlugin;
-use particle::ParticlePlugin;
 use player::PlayerPlugin;
+use spell::SpellPlugin;
 use sprite_sheets::SpriteSheetPlugin;
 use wave::WavePlugin;
 
@@ -30,7 +30,7 @@ fn main() {
     .add_plugin(PlayerPlugin)
     .add_plugin(EnemyPlugin)
     .add_plugin(WavePlugin)
-    .add_plugin(ParticlePlugin)
+    .add_plugin(SpellPlugin)
     .add_plugin(SpriteSheetPlugin)
     .add_plugin(CombatPlugin)
     .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
