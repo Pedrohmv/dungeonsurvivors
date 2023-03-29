@@ -26,11 +26,10 @@ fn shoot_particle(
     mut commands: Commands,
     sprite_sheet_maps: Res<SpriteSheetsMaps>,
     mut spell_events: EventReader<SpellEvent>,
-    mut player_query: Query<(&Transform, &mut Health), With<Player>>,
+    mut player_query: Query<&Transform, With<Player>>,
 ) {
-    let (transform, mut health) = player_query.single_mut();
+    let transform = player_query.single_mut();
     for spell_event in spell_events.iter() {
-        health.current -= 1;
         commands.spawn((
             RigidBody::KinematicVelocityBased,
             Velocity {
