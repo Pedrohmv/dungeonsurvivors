@@ -3,6 +3,7 @@ mod enemy;
 mod player;
 mod spell;
 mod sprite_sheets;
+mod utils;
 mod wave;
 
 use bevy::{prelude::*, text::TextStyle, window::PrimaryWindow};
@@ -43,7 +44,7 @@ fn main() {
     }
     app.add_startup_system(setup_camera)
         .add_system(camera_follow_player)
-        //.add_system(display_events)
+        .add_system(display_events)
         .add_system(update_score)
         .run();
 }

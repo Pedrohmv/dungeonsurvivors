@@ -1,16 +1,12 @@
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::prelude::*;
 use bevy_rapier2d::prelude::Velocity;
-use rand::random;
 
 use crate::player::Player;
 
 const ENEMY_SIZE: f32 = 32.;
 
 #[derive(Component)]
-pub struct Enemy {
-    pub health: i16,
-}
-
+pub struct Enemy;
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {

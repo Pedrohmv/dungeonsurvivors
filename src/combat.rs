@@ -1,6 +1,7 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::CollisionEvent;
 
-use crate::{player::Player, sprite_sheets::SpriteSheetsMaps};
+use crate::{enemy::Enemy, player::Player, utils::lerp};
 
 #[derive(Component)]
 struct HealthGlobe;
@@ -35,7 +36,8 @@ impl Plugin for CombatPlugin {
         app.add_event::<DamageEvent>()
             .add_startup_system(spawn_health_globe)
             .add_system(health_globe_update)
-            .add_system(handle_enemy_damage);
+            .add_system(handle_collisions)
+            .add_system(handle_damage);
     }
 }
 
@@ -89,18 +91,12 @@ fn health_globe_update(
     }
 }
 
-fn lerp(a: f32, b: f32, t: f32) -> f32 {
-    a + (b - a) * t
-}
-
-fn handle_enemy_damage(
-    mut damage_events: EventReader<DamageEvent>,
+fn handle_damage(
     mut commands: Commands,
     mut query: Query<(Entity, &mut TextureAtlasSprite, &mut Damage)>,
     time: Res<Time>,
 ) {
     let delta = time.delta();
-    //for damage_event in damage_events.iter() {
     for (entity, mut texture, mut damage) in query.iter_mut() {
         damage.timer.tick(delta);
         if damage.timer.just_finished() {
@@ -108,5 +104,30 @@ fn handle_enemy_damage(
             commands.entity(entity).remove::<Damage>();
         }
     }
-    //}
+}
+
+fn handle_collisions(
+    mut commands: Commands,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut player_query: Query<(Entity, &mut Health, &mut TextureAtlasSprite), With<Player>>,
+    mut query: Query<(Entity, &mut Enemy)>,
+) {
+    let (player_entity, mut health, mut texture) = player_query.single_mut();
+    for collision_event in collision_events.iter() {
+        if let CollisionEvent::Started(e1, e2, _) = collision_event {
+            for (entity, _) in query.iter_mut() {
+                let is_player_entity = e1 == &player_entity || e2 == &player_entity;
+                let is_enemy_entity = e1 == &entity || e2 == &entity;
+                if is_player_entity && is_enemy_entity {
+                    if health.current < 1 {
+                        health.current = 0;
+                    } else {
+                        health.current -= 1;
+                    }
+                    texture.color = Color::rgba(255., 255., 255., 1.);
+                    commands.entity(player_entity).insert(Damage::default());
+                };
+            }
+        }
+    }
 }

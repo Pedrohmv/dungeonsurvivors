@@ -1,7 +1,10 @@
+use std::cmp::max;
+
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier2d::prelude::*;
+use rand::random;
 
-use crate::enemy::Enemy;
+use crate::{combat::Health, enemy::Enemy};
 
 const ENEMY_SIZE: f32 = 32.;
 
@@ -15,15 +18,15 @@ pub struct WavePlugin;
 
 impl Plugin for WavePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_wave);
-        //.add_system(spawn_enemy_wave);
+        app.add_startup_system(spawn_wave)
+            .add_system(spawn_enemy_wave);
     }
 }
 
 fn spawn_wave(mut commands: Commands) {
     commands.spawn(Wave {
         index: 0,
-        timer: Timer::from_seconds(1., TimerMode::Repeating),
+        timer: Timer::from_seconds(10., TimerMode::Repeating),
     });
 }
 
@@ -54,13 +57,13 @@ fn spawn_enemy_wave(
         let texture_atlas_handle = texture_atlases.add(texture_atlas);
         let enemy_index = (11 - 1) * 12 + (2 - 1);
 
-        for _ in 0..1 {
-            let x = window.width() * 0.8 * rand::random::<f32>()
-                + rand::random::<f32>() * (window.width() * 0.2 - ENEMY_SIZE)
-                + ENEMY_SIZE / 2.;
-            let y = window.height() * 0.8 * rand::random::<f32>()
-                + rand::random::<f32>() * (window.height() * 0.2 - ENEMY_SIZE)
-                + ENEMY_SIZE / 2.;
+        let enemy_count = ((wave.index as f32).log(1.1) + 10.) as usize;
+        println!("{}", enemy_count);
+        for _ in 0..enemy_count {
+            let radious = max(window.height() as usize, window.width() as usize) as f32 / 2.;
+            let angle = (random::<f32>() * 360.0).to_radians();
+            let x = window.width() / 2. + radious * angle.cos();
+            let y = window.height() / 2. + radious * angle.sin();
             commands.spawn((
                 RigidBody::KinematicVelocityBased,
                 Collider::cuboid(ENEMY_SIZE / 2., ENEMY_SIZE / 2.),
@@ -82,7 +85,11 @@ fn spawn_enemy_wave(
                     transform: Transform::from_xyz(x, y, 0.),
                     ..default()
                 },
-                Enemy { health: 16 },
+                Enemy,
+                Health {
+                    total: 16,
+                    current: 16,
+                },
             ));
         }
     }

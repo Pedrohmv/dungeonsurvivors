@@ -9,8 +9,8 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 #[derive(Component)]
-pub struct Particle {
-    damage: u16,
+pub struct Spell {
+    damage: usize,
 }
 
 pub struct SpellPlugin;
@@ -57,7 +57,7 @@ fn shoot_particle(
                 ..default()
             },
             Name::from("Particle"),
-            Particle { damage: 8 },
+            Spell { damage: 8 },
             Animation {
                 start: 0,
                 end: 2,
@@ -70,33 +70,35 @@ fn shoot_particle(
 fn handle_particle_contacts(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
-    query: Query<(Entity, &mut Particle)>,
-    mut enemy_query: Query<(Entity, &mut Enemy, &mut TextureAtlasSprite)>,
+    query: Query<(Entity, &mut Spell)>,
+    mut enemy_query: Query<(Entity, &mut Enemy, &mut Health, &mut TextureAtlasSprite)>,
     mut score: ResMut<Score>,
-    mut damage_events: EventWriter<DamageEvent>,
 ) {
     for collision_event in collision_events.iter() {
         for (entity, particle) in query.iter() {
             if let CollisionEvent::Started(e1, e2, _) = collision_event {
                 if e1 == &entity || e2 == &entity {
                     commands.entity(entity).despawn();
-                    if let Some((entity, mut enemy, mut texture)) = enemy_query
+                    if let Some((entity, mut enemy, mut health, mut texture)) = enemy_query
                         .iter_mut()
-                        .filter(|(enemy_entity, _, _)| enemy_entity == e1 || enemy_entity == e2)
+                        .filter(|(enemy_entity, _, _, _)| enemy_entity == e1 || enemy_entity == e2)
                         .next()
                     {
-                        enemy.health -= particle.damage as i16;
-                        damage_events.send(DamageEvent { entity });
-                        texture.color = Color::rgba(255., 255., 255., 1.);
                         commands.entity(entity).insert(Damage::default());
+                        if health.current < particle.damage {
+                            health.current = 0;
+                        } else {
+                            health.current -= particle.damage;
+                        }
+                        texture.color = Color::rgba(255., 255., 255., 1.);
                     };
                 }
             }
         }
     }
 
-    for (entity, enemy, _) in enemy_query.iter() {
-        if enemy.health <= 0 {
+    for (entity, enemy, health, _) in enemy_query.iter() {
+        if health.current == 0 {
             commands.entity(entity).despawn();
             score.value += 1;
         }

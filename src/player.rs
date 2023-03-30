@@ -103,7 +103,7 @@ fn setup_player_movement(
 fn handle_player_movement(mut query: Query<(&mut Velocity, &Transform, &Player)>) {
     if let Ok((mut velocity, transform, player)) = query.get_single_mut() {
         let distance = transform.translation.distance(player.destination);
-        if transform.translation.distance(player.destination) < 1. {
+        if distance < 1. {
             velocity.linvel = Vec2::ZERO;
         }
     }
